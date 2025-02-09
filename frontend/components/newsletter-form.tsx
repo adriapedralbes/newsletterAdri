@@ -40,15 +40,30 @@ export default function NewsletterForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    console.log(values);
-    setIsLoading(false);
-    
-    toast.success("Thanks for subscribing! Please check your email to confirm.");
-    form.reset();
+
+    try {
+      const response = await fetch('http://localhost:8000/api/newsletter-subscriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error during subscription');
+      }
+
+      const data = await response.json();
+      console.log(data);
+      toast.success("Thanks for subscribing! Please check your email to confirm.");
+      form.reset();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -72,7 +87,7 @@ export default function NewsletterForm() {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="consent"
